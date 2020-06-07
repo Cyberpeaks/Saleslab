@@ -1,0 +1,60 @@
+{% extends "admin_template.html" %}
+
+
+{% block body %}
+
+      <div class="row" >
+        <div class="col-lg-6" style = "width:100%;">
+          <section class="panel">
+            <header class="panel-heading">
+              {{msg}}
+            </header>
+            <div class="panel-body">
+              <form action="{{url_for('update_product')}}" role="form"method="post">
+                <div class = "form-group">
+                  <table>
+
+                    <div class="form-group">
+                      <label for = "role">Select Company:</label>
+                      <select name ="company" required>
+                            <option selected ="selected" value ="">Select Company</option>
+                            {% for company in companies %}
+                              <option value="{{company.id}}">{{company.companyname}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                      <div class="form-group">
+                        <label for="firstname">Product Name</label>
+                        <input type="text" class="form-control" value = "{% for product in products %}{{product.product_name}}{% endfor %}"name="product" placeholder="" required="YES">
+                      </div>
+                      <div class="form-group">
+                        <label for="lastname">Unit Price</label>
+                        <input type="text" class="form-control" value = "{% for product in products %}{{product.price}}{% endfor %}"name="price" placeholder="" required="YES">
+                      </div>
+
+                      <div class="form-group">
+                        <label for = "status">Product Status:</label>
+                        <select class="form-control" name ="status" value ="{% for product in products %}{{product.status}}{% endfor %}"required = "yes">
+                          <option selected ="selected" value ="">Select Status</option>
+                          <option value="">CURRENT</option>
+                          <option value="">NON-CURRENT</option>
+                        </select>
+                      </div>
+
+                    <button type="submit" class="btn btn-primary" value="Update">Update</button>
+                  </table>
+                </div>
+              </form>
+
+            </div>
+          </section>
+        </div>
+
+      </div>
+      <!-- Inline form-->
+
+            <!-- CKEditor -->
+
+<!-- container section end -->
+
+{% endblock %}

@@ -1,0 +1,14 @@
+
+.message, .success {
+  border: 1px dashed green;
+  padding-left:10px;
+  padding-top: 0.5px;
+  padding-bottom: 0.5px;
+  margin-bottom: 5px;
+  color: #333;
+  background-color: white;
+  opacity:70%;
+}
+
+
+/*# sourceMappingURL=style.css.map */

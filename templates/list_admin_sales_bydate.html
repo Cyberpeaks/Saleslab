@@ -1,0 +1,101 @@
+{% extends "admin_template.html" %}
+
+
+{% block body %}
+
+
+  <!--main content start-->
+
+      <!-- page start-->
+      <div class="row">
+        <div class="col-lg-12">
+          <section class="panel" style = "padding-top:1%; padding-bottom:0%;padding-left:1%;">
+                <form class="" action="{{ url_for('admin_sales_bydate_List') }}" method="post">
+                  <table class="table" >
+                    <tr>
+                      <td>Sales Date:</td>
+                      <td><input type="date" name="this_day" value="{{date}}"></td>
+                    </tr>
+
+                    <tr>
+                      <td>Sales Person:</td>
+                      <td><select name ="salesperson"required >
+                            <option selected ="selected" value ="">Sales Person</option>
+                            {% for salesperson in salespersons %}
+                              <option value="{{salesperson.id}}">{{salesperson.firstname}} {{salesperson.lastname}}</option>
+                            {% endfor %}
+                        </select>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td></td>
+                      <td><button type="submit" name="" style = "margin-top:0%;">View Sales</button></td>
+                    </tr>
+                  </table>
+                </form>
+              </section>
+            </div>
+          </div>
+
+
+      <div class="row">
+        <div class="col-lg-12">
+          <section class="panel">
+            <header class="panel-heading">
+              {% for name in firstname %}{{name.firstname}}{% endfor %}{{msg}}
+            </header>
+
+            <table class="table table-striped table-advance table-hover">
+              <tbody>
+                <tr style = "text-align:center;">
+                  <th><i class=""></i>Items</th>
+                  <th><i class="icon_desktop"></i> Product</th>
+                  <th><i class="icon_profile"></i> Customer</th>
+                  <th><i class="icon_calendar"></i> Date</th>
+                  <th><i class="icon_documents_alt"></i> Quantity</th>
+                  <th><i class="icon_table"></i> Unit Price</th>
+                  <th><i class="icon_genius"></i> Amount</th>
+                  <th><i class="icon_like"></i> Remarks</th>
+                  <th><i class="icon_cogs"></i> Action</th>
+                </tr>
+                {% for mysale in mysales %}
+                  <tr style = "text-align:center;">
+                    <td>{{mysale.number}}</td>
+                    <td>{{mysale.product_name}}</td>
+                    <td>{{mysale.Customer}}</td>
+                    <td>{{mysale.sales_Date}}</td>
+                    <td>{{mysale.quantity}}</td>
+                    <td>{{mysale.Unit_Price}}</td>
+                    <td>{{mysale.Amount}}</td>
+                    <td>{{mysale.remark}}</td>
+
+                    <td>
+                      <div class="btn-group">
+                        <a class="btn btn-primary" href="#"><i class="icon_plus_alt2"></i></a>
+                        <a class="btn btn-success" href="#"><i class="icon_check_alt2"></i></a>
+                        <a class="btn btn-danger" href="#"><i class="icon_close_alt2"></i></a>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+                {% for cal in mysum %}
+                <tr>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td colspan="4">Total = {{cal.total}}</td>
+                </tr>
+                {% endfor %}
+
+              </tbody>
+            </table>
+          </section>
+        </div>
+      </div>
+      <!-- page end-->
+    
+
+{% endblock %}

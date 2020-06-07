@@ -1,0 +1,37 @@
+$h3color: #2d0922;
+
+h6 {
+  font-size: 20px;
+  color: $h3color;
+}
+
+button{
+  color:$h3color;
+}
+
+table {
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  li {
+    display: inline-block;
+    color: $h3color;
+  }
+  a {
+    display: block;
+    padding: 6px 12px;
+    text-decoration: none;
+  }
+}
+
+.message {
+  border: 1px dashed #ccc;
+  padding: 10px;
+  color: #333;
+}
+.success {
+  @extend.message;
+  border-color: green;
+}

@@ -1,0 +1,82 @@
+{{% extends "admin_template.html" %}
+
+{% block body %}
+  <div class="message">
+    <h4 color = "red">{{msg}}</h4>
+  </div>
+
+  <div class="">
+    <form class="" action="{{ url_for('add_admin') }}" method="post">
+      <table>
+          <tr>
+    			<td><label for="firstName">First Name:</label></td>
+    			<td><input type="text" name="firstname" size="20" id="firstName"
+            required/></td>
+    		</tr>
+
+    		<tr>
+    			<td><label for="lastName">Last Name:</label></td>
+    			<td><input id = "lastName" type="text" name="lastname" size="20" id="lastName"
+            required/></td>
+    		<tr>
+
+    		<tr>
+    			<td>&nbsp;</td>
+    			<td>&nbsp;</td>
+    		</tr>
+
+    		<tr>
+    			<td>Gender</td><br/>
+    			<td><input type ="radio" name="radgender" value ="male" id="male"/>
+    			<label for = "male">Male</label><br/>
+    			<input type ="radio" name="radgender" value ="female" id ="female"
+          required/>
+    			<label for ="female">Female</label><br/></td>
+    		</tr>
+    		<tr>
+
+    		</tr>
+
+    		<tr>
+    			<td>&nbsp;</td>
+    			<td>&nbsp;</td>
+    		</tr>
+    		<section id = "contact">
+
+    			<tr>
+    				<td><label for ="e-mail">User Name:</label></td>
+    				<td><input class = "contact" type="email" name="username" size="20" id="email"
+              placeholder="Type Email Here" required/>
+            </td>
+    			</tr>
+
+    			<tr>
+    				<td><label for="passWord">Password:</label></td>
+    				<td><input class = "contact" type ="text" name="pwdUser"
+              required/></td>
+    			</tr>
+    			<tr>
+    				<td><label for="confPassword">Confirm Password:</label></td>
+    				<td><input class = "contact" type="password" name="confPass"
+              required id ="confPass"/></td>
+    			</tr>
+
+    			<tr>
+    				<td>&nbsp;</td>
+    				<td>&nbsp;</td>
+    			</tr>
+          <tr>
+      			<td></td>
+      			<td><button type ="submit"  value = "Register Now" />Add Admin</td>
+      		</tr>
+    		</section>
+        <tr>
+          <td>&nbsp;</td>
+          <td><a href="{{url_for('admin_SignIn')}}">Login</a></td>
+        </tr>
+
+    	</table>
+    </form>
+
+  </div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "admin_template.html" %}
+
+
+{% block body %}
+
+
+      <div class="row" >
+        <div class="col-lg-6" style = "width:100%;">
+          <section class="panel">
+            <header class="panel-heading">
+              {{msg}}
+            </header>
+            <div class="panel-body">
+              <form role="form"action="{{ url_for('add_company') }}" method="post">
+                <div class="form-group">
+                  <label for="">Company Name</label>
+                  <input type="text" required class="form-control" name="company" placeholder="Company">
+                </div>
+                <div class="form-group">
+                  <label for="">Product Type</label>
+                  <input type="text" required class="form-control" name="bizt" placeholder="Product">
+                </div>
+
+                <div class="form-group">
+                  <label for="">Contact Person</label>
+                  <input type="text" required class="form-control" name="contactperson" placeholder="Name">
+                </div>
+
+                <div class="form-group">
+                  <label for="exampleInputPassword1">Mobile</label>
+                  <input type="text" required class="form-control" name="phonecall" placeholder="contact">
+                </div>
+
+                <div class="form-group">
+                  <label for="exampleInputPassword1">Company Email</label>
+                  <input type="text" required class="form-control" name="email" placeholder="info@example.com">
+                </div>
+
+
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </form>
+
+            </div>
+          </section>
+        </div>
+
+      </div>
+      <!-- Inline form-->
+
+            <!-- CKEditor -->
+
+<!-- container section end -->
+
+
+
+{% endblock %}

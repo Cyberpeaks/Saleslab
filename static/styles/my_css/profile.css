@@ -1,0 +1,25 @@
+p{
+  text-align: justify;
+  color:;
+}
+
+section.nav>a,header{
+  color: white;
+  font-weight: bold;
+}
+
+@media print {
+  .screen-only {
+    display:none;
+  }
+}
+@media (min-width:700px) {
+  body {
+    background-color:;
+  }
+}
+@media(max-width:699px){
+  body {
+    background-color: #;
+  }
+}

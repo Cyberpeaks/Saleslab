@@ -1,0 +1,104 @@
+{% extends "salesperson_template.html" %}
+
+
+{% block body %}
+
+    <!-- page start-->
+
+    <div class="row">
+      <div class="col-lg-12">
+        <section class="panel">
+          <header class="panel-heading">
+            {{msg}}
+          </header>
+            <section class="panel" style = "padding-top:1%; padding-bottom:0%;padding-left:1%;">
+              <form class="" action="{{ url_for('add_sales') }}" method="post">
+                <table class="table" >
+
+                    <div class="row">
+                      <div class="col-lg-12">
+                        <tr>
+                          <td>Select Product:
+                          </td>
+                          <td><select name ="product" required>
+                                <option selected ="selected" value ="">Select Product</option>
+                                {% for product in products %}
+                                  <option value="{{product.id}}">{{product.product_name}}</option>
+                                {% endfor %}
+                            </select>
+                          </td>
+                        </tr>
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-lg-12">
+                        <tr>
+                          <td>Select Customer:
+                          </td>
+                          <td><select name ="customer"required >
+                                <option selected ="selected" value ="">Select Customer</option>
+                                {% for customer in customers %}
+                                  <option value="{{customer.id}}">{{customer.firstname}} {{customer.lastname}}</option>
+                                {% endfor %}
+                            </select>
+                          </td>
+                        </tr>
+
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-lg-12">
+                        <tr>
+                          <td>Sales Person:</td>
+                          <td><input value = "{{firstname}}" type="text" name="salesperson" size="20" disabled=""></input></td>
+                        </tr>
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-lg-12">
+                        <tr>
+                          <td>Date:</td>
+                          <td><input type="date" value = "{{date}}" name="sales-date" size="20" disabled=""></input></td>
+                        </tr>
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-lg-12">
+                        <tr>
+                          <td>Quantity:</td>
+                          <td><input id = "" type="number"  name="quantity" size="2" id=""required/></td>
+                        <tr>
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-lg-12">
+                        <tr>
+                          <td>Remark:</td>
+                          <td><select name ="remark" required>
+                                <option selected ="selected" value ="">Select Remark</option>
+                                <option value="PAID FULL">PAID FULL</option>
+                                <option value="NOT PAID">NOT PAID</option>
+                              </select>
+                          </td>
+                        </tr>
+                      </div>
+                    </div>
+                    <tr>
+                      <td></td>
+                      <td><button type="submit"class="btn btn-primary"role="form" name="" style = "margin-top:0%;">Add Sales</button></td>
+                    </tr>
+                </table>
+              </form>
+            </section>
+          </section>
+
+    <!-- page end-->
+
+<!--main content end-->
+
+{% endblock %}

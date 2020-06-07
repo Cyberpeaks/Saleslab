@@ -1,0 +1,40 @@
+{% extends "admin_template.html" %}
+
+{% block heading %}
+  {{page}}
+{% endblock %}
+
+{% block body %}
+
+  <div class="message">
+    <h4 color = "red">{{msg}}</h4>
+  </div>
+            <table border = "1">
+              <tr>
+                <th colspan="5">Customers List</th>
+              </tr>
+              <tr>
+                <th>S/N</th>
+                <th>Full Name</th>
+                <th>Contact #</th>
+                <th>Gender</th>
+                <th>DOE</th>
+
+              </tr>
+              {% for employee in employees %}
+                <tr>
+                  <td>{{employee.id}}</td>
+                  <td>{{employee.firstname}} {{employee.lastname}}</td>
+                  <td>{{employee.phone}}</td>
+                  <td>{{employee.gender}}</td>
+                  <th>{{employee.doe}}</th>
+                </tr>
+              {% endfor %}
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+{% endblock %}

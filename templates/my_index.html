@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block heading %}
+  {{page}}
+{% endblock %}
+
+{% block body %}
+
+<div class="container">
+  <section class = "signin">
+        <a href="{{url_for('sales_SignIn')}}">
+          <div class="sales-login">
+          </div>
+        </a>
+        <a href="{{url_for('admin_SignIn')}}">
+          <div class="admin-login">
+          </div>
+        </a>
+  </section>
+</div>
+
+{% endblock %}

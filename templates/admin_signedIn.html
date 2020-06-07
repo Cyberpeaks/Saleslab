@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+
+{% block heading %}
+  {{page}}
+{% endblock %}
+
+{% block body %}
+  <body>
+    <div class="message">
+
+        <h5>{{msg}}{{firstname}}.<a style = "float:right; padding-right:10px" href="{{url_for('admin_logout')}}">Logout</a></h5>
+
+    </div>
+
+    <div class="signedin">
+      <table border = "1">
+        <tr>
+          <th colspan="2">Admin Tasks</th>
+        </tr>
+        <tr>
+          <td><a href="{{url_for('reg_Emp')}}">Add Employee</a></td>
+          <td><a href="{{url_for('emp_List')}}">View Employees</a></td>
+        </tr>
+        <tr>
+          <td><a href="{{url_for('add_company')}}">Add Company</a></td>
+          <td><a href="{{url_for('company_list')}}">View Companies</a></td>
+        </tr>
+        <tr>
+          <td><a href="{{url_for('add_product')}}">Add Product</a></td>
+          <td><a href="{{url_for('list_product')}}">View Products</a></td>
+        </tr>
+        <tr>
+          <td><a href="{{url_for('add_location')}}">Add Location</a></td>
+          <td><a href="#">View Locations</a></td>
+        </tr>
+        <tr>
+          <td><a href="{{url_for('add_customer')}}">Add Customer</a></td>
+          <td><a href="{{url_for('customer_List')}}">View Customers</a></td>
+        </tr>
+        <tr>
+          <td><a href="{{url_for('select_emp')}}">Add Sales Person</a></td>
+          <td><a href="{{url_for('salesperson_List')}}">View Sales Persons</a></td>
+        </tr>
+        <tr>
+          <td><a href="{{url_for('admin_sales_bydate_List')}}">View Sales</a></td>
+          <td><a href="{{url_for('admin_allsales_List')}}">View All Sales</a></td>
+        </tr>
+        <tr>
+          <td><a href="#">Add Stock</a></td>
+          <td><a href="#">View Stocks</a></td>
+        </tr>
+        <tr>
+          <td><a href="{{url_for('add_admin')}}">Add Admin</a></td>
+          <td><a href="{{url_for('admin_List')}}">View Administrators</a></td>
+        </tr>
+
+      </table>
+    </div>
+    <br/>
+    <br/>
+    <div class="">
+
+    </div>
+  </body>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "admin_template.html" %}
+
+
+{% block body %}
+
+      <div class="row" >
+        <div class="col-lg-6" style = "width:100%;">
+          <section class="panel">
+            <header class="panel-heading">
+              {{msg}}
+            </header>
+            <div class="panel-body">
+              <form action="{{url_for('update_company')}}" role="form"method="post">
+                <div class = "form-group">
+                  <table>
+                      
+                      <div class="form-group">
+                        <label for="firstname">Company Name</label>
+                        <input type="text" class="form-control" value = "{% for company in companies %}{{company.companyname}}{% endfor %}"name="company" placeholder="" required="YES">
+                      </div>
+                      <div class="form-group">
+                        <label for="lastname">Product Type</label>
+                        <input type="text" class="form-control" value = "{% for company in companies %}{{company.businesstype}}{% endfor %}"name="bizt" placeholder="" required="YES">
+                      </div>
+                    <div class="form-group">
+                      <label for="DOB">Contact Person</label>
+                      <input type="text" class="form-control" value = "{% for company in companies %}{{company.contact_person}}{% endfor %}" name="contactperson"  required"YES" >
+                    </div>
+
+                      <div class="form-group">
+                        <label for="username">Email</label>
+                        <input type="email" class="form-control" value = "{% for company in companies %}{{company.email}}{% endfor %}"name="email" >
+                      </div>
+                      <div class="form-group">
+                        <label for="phone">Mobile</label>
+                        <input type="text" class="form-control" value = "{% for company in companies %}{{company.phone}}{% endfor %}" name="phone" >
+                      </div>
+
+                      <div class="form-group">
+                        <label for = "status">Company Status:</label>
+                        <select class="form-control" name ="status" value ="{% for company in companies %}{{company.status}}{% endfor %}"required = "yes">
+                          <option selected ="selected" value ="">Select Status</option>
+                          <option value="Accountant">CURRENT</option>
+                          <option value="Driver">NON-CURRENT</option>
+
+                        </select>
+                      </div>
+
+
+                    <button type="submit" class="btn btn-primary" value="Update">Update</button>
+                  </table>
+                </div>
+              </form>
+
+            </div>
+          </section>
+        </div>
+
+      </div>
+      <!-- Inline form-->
+
+            <!-- CKEditor -->
+
+<!-- container section end -->
+
+{% endblock %}

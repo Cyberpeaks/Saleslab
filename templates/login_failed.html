@@ -1,0 +1,14 @@
+{% extends "error_template.html" %}
+
+
+
+
+{% block body %}
+    <div class="page-404">
+      <p class="text-404">404</p>
+
+      <h2>Aww Snap!</h2>
+      <p>{{msg}}.<br><a href="{{url_for('index')}}">Retry</a></p>
+    </div>
+
+{% endblock %}

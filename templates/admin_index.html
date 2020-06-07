@@ -1,0 +1,133 @@
+{% extends "admin_template.html" %}
+
+
+{% block body %}
+
+        <div class="row">
+          <div class="col-lg-3 col-md-3 col-sm-12 col-xs-12">
+            <div class="info-box blue-bg">
+              <i class="fa fa-cloud-download"></i>
+              <div class="count">{%for counts in sales_count %}{{counts.mycount}}{% endfor %}</div>
+              <div class="title">Sales</div>
+            </div>
+            <!--/.info-box-->
+          </div>
+          <!--/.col-->
+
+          <div class="col-lg-3 col-md-3 col-sm-12 col-xs-12">
+            <div class="info-box brown-bg">
+              <i class="fa fa-shopping-cart"></i>
+              <div class="count">{%for counts in products_count %}{{counts.mycount}}{% endfor %}</div>
+              <div class="title">Products</div>
+            </div>
+            <!--/.info-box-->
+          </div>
+          <!--/.col-->
+
+          <div class="col-lg-3 col-md-3 col-sm-12 col-xs-12">
+            <div class="info-box dark-bg">
+              <i class="fa fa-thumbs-o-up"></i>
+              <div class="count">{%for counts in customers_count %}{{counts.mycount}}{% endfor %}</div>
+              <div class="title">Customers</div>
+            </div>
+            <!--/.info-box-->
+          </div>
+          <!--/.col-->
+
+          <div class="col-lg-3 col-md-3 col-sm-12 col-xs-12">
+            <div class="info-box green-bg">
+              <i class="fa fa-cubes"></i>
+              <div class="count">{%for counts in locations_count %}{{counts.mycount}}{% endfor %}</div>
+              <div class="title">Locations</div>
+            </div>
+            <!--/.info-box-->
+          </div>
+          <!--/.col-->
+
+        </div>
+        <!--/.row-->
+
+
+
+        <!-- Today status end -->
+
+
+
+        <div class="row">
+
+          <div class="col-lg-9 col-md-12">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <h2><i class="fa fa-flag-o red"></i><strong>Registered Salespersons</strong></h2>
+                <div class="panel-actions">
+                  <a href="#" class="btn-setting"><i class="fa fa-rotate-right"></i></a>
+                  <a href="#" class="btn-minimize"><i class="fa fa-chevron-up"></i></a>
+                  <a href="#" class="btn-close"><i class="fa fa-times"></i></a>
+                </div>
+              </div>
+              <div class="panel-body">
+                <table class="table bootstrap-datatable countries">
+                  <thead>
+                    <tr>
+                      <th>Salespersons</th>
+                      <th>Sales</th>
+                      <th>Net Sales</th>
+                      <th>Performance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for salesperson in salespersons %}
+                      <tr>
+                        <!--<td><img src="img/Germany.png" style="height:18px; margin-top:-2px;"></td> -->
+
+                        <td>{{salesperson.fullname}}</td>
+                        <td>{{salesperson.count}}</td>
+                        <td>{{salesperson.netsales}}</td>
+                        <td>
+                          <div class="progress thin">
+                            <div class="progress-bar progress-bar-danger" role="progressbar" aria-valuenow="43" aria-valuemin="0" aria-valuemax="100" style="width: {{salesperson.count}}%;">
+                            </div>
+                            <div class="progress-bar progress-bar-warning" role="progressbar" aria-valuenow="57" aria-valuemin="0" aria-valuemax="100" style="width: {{salesperson.bal}}%;">
+                            </div>
+                          </div>
+                          <span class="sr-only">43%</span>
+                        </td>
+                      </tr>
+                    {% endfor %}
+
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
+          </div>
+
+          </div>
+        
+
+
+
+        <div class="row">
+          <div class="col-md-6 portlets">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <h2><strong>Calendar</strong></h2>
+                <div class="panel-actions">
+                  <a href="#" class="wminimize"><i class="fa fa-chevron-up"></i></a>
+                  <a href="#" class="wclose"><i class="fa fa-times"></i></a>
+                </div>
+
+              </div><br><br><br>
+              <div class="panel-body">
+                <!-- Widget content -->
+
+                <!-- Below line produces calendar. I am using FullCalendar plugin. -->
+                <div id="calendar"></div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+  {% endblock %}
