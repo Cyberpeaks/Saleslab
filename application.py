@@ -12,7 +12,7 @@ app.secret_key = 'your secret key'
 
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'ol2PHP@20'
+app.config['MYSQL_PASSWORD'] = 'ol1PHP@20'
 app.config['MYSQL_DB'] = 'GOBT'
 
 
