@@ -1,4 +1,4 @@
-{% extends "salesperson_template.html" %}
+{% extends "admin_template.html" %}
 
 
 {% block body %}
@@ -12,7 +12,7 @@
             {{msg}}
           </header>
             <section class="panel" style = "padding-top:1%; padding-bottom:0%;padding-left:1%;">
-              <form class="" action="{{ url_for('add_sales') }}" method="post">
+              <form class="" action="{{ url_for('admin_add_sales') }}" method="post">
                 <table class="table" >
 
                     <div class="row">
@@ -52,7 +52,13 @@
                       <div class="col-lg-12">
                         <tr>
                           <td>Sales Person:</td>
-                          <td><input value = "{{firstname}}" type="text" name="salesperson" size="20" disabled=""></input></td>
+                          <td><select name ="salesperson"required >
+                                <option selected ="selected">Select Salesperson</option>
+                                {% for salesperson in salespersons %}
+                                  <option value="{{salesperson.id}}">{{salesperson.firstname}} {{salesperson.lastname}}</option>
+                                {% endfor %}
+                            </select>
+                          </td>
                         </tr>
                       </div>
                     </div>
@@ -79,7 +85,7 @@
                       <div class="col-lg-12">
                         <tr>
                           <td>Quantity:</td>
-                          <td><input id = "" type="number"  name="quantity" size="2" id=""required/></td>
+                          <td><input type="number"  name="quantity" size="2" required/></td>
                         <tr>
                       </div>
                     </div>
@@ -99,7 +105,7 @@
                     </div>
                     <tr>
                       <td></td>
-                      <td><button type="submit"class="btn btn-primary"role="form" name="" style = "margin-top:0%;">Add Sales</button></td>
+                      <td><button type="submit"class="btn btn-primary"role="form" style = "margin-top:0%;">Add Sales</button></td>
                     </tr>
                 </table>
               </form>

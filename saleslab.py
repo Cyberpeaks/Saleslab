@@ -1,5 +1,9 @@
 from flask import Flask, render_template, request, session, redirect, url_for
 
+import os
+
+#from models import *
+
 from flask_mysqldb import MySQL
 import MySQLdb.cursors
 from flask_session import Session
@@ -9,6 +13,7 @@ import re
 app = Flask(__name__)
 
 app.secret_key = 'your secret key'
+#engine = create_engine("mysql://myadmin:ol1PHP@20@localhost",echo=True)
 
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
@@ -120,6 +125,7 @@ def dashboard():
     customers_count = row_counter("customers")
     locations_count = row_counter("locations")
     page = "ADMIN"
+    msg = "Welcome, "
     # Get session data, we can access this data in other routes
 
     firstname = session.get('firstname')
@@ -128,10 +134,11 @@ def dashboard():
     salespersons = performance()
 
     if salespersons:
-        msg = "Welcome, "
+
         return render_template("admin_index.html",sales_count=sales_count,products_count=products_count,customers_count=customers_count,locations_count=locations_count, salespersons = salespersons,msg=msg, page = page, username = username, firstname = firstname)
     else:
-        return 'not pass'
+        return render_template("admin_index.html",sales_count=sales_count,products_count=products_count,customers_count=customers_count,locations_count=locations_count, salespersons = salespersons,msg=msg, page = page, username = username, firstname = firstname)
+
 # LOGOUT ADMIN
 @app.route('/admin/logout/')
 def admin_logout():
@@ -423,7 +430,7 @@ def login_Sales():
             cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
             cursor.execute("SET @n = 0")
             cursor.execute("""SELECT @n := @n+1 AS number, sales.id AS id, sales.sales_Date, sales.quantity,
-            sales.remark, products.product_name, products.price AS Unit_Price, products.price*sales.quantity AS Amount,
+            sales.remark, products.product_name, sales.unit_price AS Unit_Price, sales.unit_price*sales.quantity AS Amount,
              CONCAT(customers.firstname," ",customers.lastname) AS Customer FROM sales,products,customers
              WHERE sales.product_id = products.id AND sales.customer_id = customers.id
              AND salesPerson_id=%s AND sales_Date=%s""",(employee_id,date))
@@ -474,14 +481,13 @@ def select_add_emp():
     page = "Add Salesperson"
     msg = "Choose Employee"
     status = "CURRENT"
-    sales = "YES"
 
     firstname = session.get('firstname')
     username = session.get('username')
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM employees WHERE sales_permit=%s AND status=%s",
-    (sales,status))
+    cursor.execute("SELECT * FROM employees WHERE status=%s",
+    [status])
     employees = cursor.fetchall()
     if employees:
         return render_template("add_sales_person.html",page = page, employees=employees,msg=msg, firstname=firstname)
@@ -494,6 +500,7 @@ def select_add_emp():
 
 @app.route("/add-persons",methods = ['POST','GET'])
 def add_sales_person():
+    status="CURRENT"
     page = "Add Salesperson"
     msg = "Choose Employee"
 
@@ -514,7 +521,7 @@ def add_sales_person():
         session['firstname'] = picks['firstname']
         firstname = session['firstname']
 
-        cursor.execute("SELECT * FROM employees")
+        cursor.execute("SELECT * FROM employees WHERE status=%s",[status])
         employees = cursor.fetchall()
         return render_template("add_sales_person.html",page=page,msg = msg,firstname = firstname, employees=employees)
     else:
@@ -1313,6 +1320,7 @@ def add_sales():
             my_customer = request.form.get("customer")
             sales_p = request.form.get("salesperson")
             sales_date = request.form.get("sales-date")
+            unit_price = request.form.get("unit-price")
             sales_quant = request.form.get("quantity")
             remark_s = request.form.get("remark")
 
@@ -1325,8 +1333,8 @@ def add_sales():
         #------------------------------------------------------------------------------
             msg = "Successful"
         # Inserts data in Customers table
-            cursor.execute("INSERT INTO sales(product_id,customer_id,salesPerson_id,sales_Date,quantity,remark)VALUES(%s,%s,%s,%s,%s,%s)",
-            (product_s,my_customer,employee_id,date,sales_quant,remark_s))
+            cursor.execute("INSERT INTO sales(product_id,customer_id,salesPerson_id,sales_Date,unit_price,quantity,remark)VALUES(%s,%s,%s,%s,%s,%s,%s)",
+            (product_s,my_customer,employee_id,date,unit_price,sales_quant,remark_s))
             mysql.connection.commit()
         #-------------------------------------------------------------------------------
         else:
@@ -1340,6 +1348,74 @@ def add_sales():
     return render_template("register_sales_form.html",page = page, msg = msg,date = date, firstname = firstname,products = products, customers = customers)
     cursor.close() #close connection
 
+# ADMIN ADD SALES HERE
+@app.route("/admaddsales",methods = ['POST','GET'])
+def admin_add_sales():
+    page = "Admin Add Sales"
+    sales = "YES"
+    firstname = session.get('firstname')
+    username = session.get('username')
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor) # connection variable
+    cursor.execute("SELECT * FROM products")
+    products = cursor.fetchall()
+    firstname = session.get('firstname')
+    employee_id = session.get('id')
+    cursor.execute("SELECT * FROM products ORDER BY product_name ASC")
+    products = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM customers ORDER BY firstname ASC")
+    customers = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM employees WHERE sales_permit=%s",[sales])
+    salespersons = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM employees")
+    employees = cursor.fetchall()
+    if products:
+
+
+        if request.method == 'POST':
+            product_s = request.form.get("product")
+            my_customer = request.form.get("customer")
+            sales_p = request.form.get("salesperson")
+            sales_date = request.form.get("sales-date")
+            unit_price = request.form.get("unit-price")
+            sales_quant = request.form.get("quantity")
+            remark_s = request.form.get("remark")
+
+        #-------------------------------------------------------------------------------
+
+
+
+        #-------------------------------------------------------------------------------
+            # This section checks if email already exits
+        #------------------------------------------------------------------------------
+            msg = "Successful"
+        # Inserts data in Customers table
+            cursor.execute("INSERT INTO sales(product_id,customer_id,salesPerson_id,sales_Date,unit_price,quantity,remark)VALUES(%s,%s,%s,%s,%s,%s,%s)",
+            (product_s,my_customer,sales_p,date,unit_price,sales_quant,remark_s))
+            mysql.connection.commit()
+        #-------------------------------------------------------------------------------
+        else:
+            msg = "Please fill the form"
+            return render_template("admin_register_sales_form.html",page = page, msg = msg,
+            date = date, firstname = firstname,products = products,
+            salespersons=salespersons, customers = customers)
+        return render_template("admin_register_sales_form.html",page = page,
+         msg = msg,date = date, firstname = firstname,salespersons=salespersons,
+         products = products, customers = customers)
+    else:
+        msg = 'Empty company list! Please add products first'
+        return render_template("admin_register_sales_form.html",page = page,
+        msg = msg,date = date, firstname = firstname,
+        products = products, customers = customers,salespersons=salespersons)
+
+    return render_template("admin_register_sales_form.html",page = page,
+     msg = msg,date = date, firstname = firstname,products = products,
+     customers = customers,salespersons=salespersons)
+    cursor.close() #close connection
+
 
 #VIEW SALESPERSON IN DATABASE
 @app.route("/mysales",methods = ['POST','GET'])
@@ -1351,7 +1427,7 @@ def mysales_List():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cursor.execute("SET @n = 0")
     cursor.execute("""SELECT @n := @n+1 AS number, sales.id AS id, sales.sales_Date, sales.quantity,
-    sales.remark, products.product_name, products.price AS Unit_Price, products.price*sales.quantity AS Amount,
+    sales.remark, products.product_name, sales.unit_price AS Unit_Price, sales.unit_price*sales.quantity AS Amount,
      CONCAT(customers.firstname," ",customers.lastname) AS Customer FROM sales,products,customers
      WHERE sales.product_id = products.id AND sales.customer_id = customers.id
      AND salesPerson_id=%s AND sales_Date=%s""",(employee_id,date))
@@ -1381,7 +1457,7 @@ def mysales_bydate_List():
 
         cursor.execute("SET @n = 0")
         cursor.execute("""SELECT @n := @n+1 AS number, sales.id AS id, sales.sales_Date, sales.quantity,
-        sales.remark, products.product_name, products.price AS Unit_Price, products.price*sales.quantity AS Amount,
+        sales.remark, products.product_name, sales.unit_price AS Unit_Price, sales.unit_price*sales.quantity AS Amount,
          CONCAT(customers.firstname," ",customers.lastname) AS Customer FROM sales,products,customers
          WHERE sales.product_id = products.id AND sales.customer_id = customers.id
          AND salesPerson_id=%s AND sales_Date=%s""",(employee_id,this_day))
@@ -1418,14 +1494,14 @@ def admin_sales_bydate_List():
         firstname = cursor.fetchall()
         cursor.execute("SET @n = 0")
         cursor.execute("""SELECT @n := @n+1 AS number,sales.sales_Date,sales.quantity,sales.remark,products.product_name,
-        products.price AS Unit_Price, products.price*sales.quantity AS Amount,
+        sales.unit_price AS Unit_Price, sales.unit_price*sales.quantity AS Amount,
         CONCAT(customers.firstname," ",customers.lastname) AS Customer FROM sales,products,customers
         WHERE sales.product_id = products.id AND sales.customer_id = customers.id
         AND salesPerson_id=%s AND sales_Date=%s""",(salesperson_id,this_day))
         mysales = cursor.fetchall()
 
         if mysales:
-            cursor.execute("""SELECT  SUM(products.price*sales.quantity) AS total
+            cursor.execute("""SELECT  SUM(sales.unit_price*sales.quantity) AS total
             FROM sales,products WHERE sales.product_id = products.id
             AND salesPerson_id=%s AND sales_Date=%s""",(salesperson_id,this_day))
             mysum = cursor.fetchall()
@@ -1455,7 +1531,7 @@ def admin_allsales_List():
     if request.method == 'POST':
         cursor.execute("SET @n = 0")
         cursor.execute("""SELECT @n := @n+1 AS number,sales.sales_Date,sales.quantity,sales.remark,products.product_name,
-        products.price AS Unit_Price, products.price*sales.quantity AS Amount,
+        sales.unit_price AS Unit_Price, sales.unit_price*sales.quantity AS Amount,
         CONCAT(employees.firstname," ",employees.lastname)
         AS Salesperson,CONCAT(customers.firstname," ",customers.lastname)
         AS Customer FROM sales,products,customers,employees WHERE sales.salesPerson_id = employees.id AND
@@ -1463,7 +1539,7 @@ def admin_allsales_List():
         AND employees.sales_permit=%s AND sales_Date=%s""",(sales,this_day))
         mysales = cursor.fetchall()
         if mysales:
-            cursor.execute("""SELECT  SUM(products.price*sales.quantity) AS total FROM sales,products WHERE sales.product_id = products.id
+            cursor.execute("""SELECT  SUM(sales.unit_price*sales.quantity) AS total FROM sales,products WHERE sales.product_id = products.id
             AND sales_Date=%s""",[this_day])
             mysum = cursor.fetchall()
             msg =  "Showing All Sales for "+ this_day
@@ -1489,20 +1565,23 @@ def admin_allsales_List2():
 
     cursor.execute("SET @n = 0")
     cursor.execute("""SELECT @n := @n+1 AS number,sales.sales_Date,sales.quantity,sales.remark,products.product_name,
-    products.price AS Unit_Price, products.price*sales.quantity AS Amount, CONCAT(employees.firstname," ",employees.lastname)
+    sales.unit_price AS Unit_Price, sales.unit_price*sales.quantity AS Amount, CONCAT(employees.firstname," ",employees.lastname)
     AS Salesperson, CONCAT(customers.firstname," ",customers.lastname) AS Customer
     FROM sales,products,customers,employees WHERE sales.salesPerson_id = employees.id
     AND sales.product_id = products.id AND sales.customer_id = customers.id""")
     mysales = cursor.fetchall()
     if mysales:
-        cursor.execute("SELECT  SUM(products.price*sales.quantity) AS total FROM sales,products WHERE sales.product_id = products.id")
-        mysum = cursor.fetchall()
         msg =  "Showing All Sales"
         this_day = "ALL"
-        return render_template("list_admin_all_sales_bydate.html", firstname=firstname,page = page, msg = msg, mysales = mysales, this_day = this_day,mysum = mysum)
+        cursor.execute("SELECT  SUM(sales.unit_price*sales.quantity) AS total FROM sales,products WHERE sales.product_id = products.id")
+        mysum = cursor.fetchall()
+        if mysum:
+            return render_template("list_admin_all_sales_bydate.html", firstname=firstname,page = page, msg = msg, mysales = mysales, this_day = this_day,mysum = mysum)
+        else:
+            return render_template("list_admin_all_sales_bydate.html", firstname=firstname,page = page, msg = msg, mysales = mysales, this_day = this_day)
     else:
-        msg =" There are no records of sales for "
-        return render_template("list_admin_all_sales_bydate.html",page = page,firstname=firstname, msg = msg,mysales=mysales, mysum = mysum)
+        msg =" There are no records of sales"
+        return render_template("list_admin_all_sales_bydate.html",page = page,firstname=firstname, msg = msg,mysales=mysales)
 
 
 def row_counter(table):
