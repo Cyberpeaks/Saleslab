@@ -5,7 +5,6 @@ import os
 #from models import *
 
 from flask_mysqldb import MySQL
-import MySQLdb.cursors
 from flask_session import Session
 from datetime import datetime
 import re
