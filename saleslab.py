@@ -2,30 +2,46 @@ from flask import Flask, render_template, request, session, redirect, url_for
 
 import os
 
-#from models import *
+from flask_sqlalchemy import SQLAlchemy
 
 from flask_mysqldb import MySQL
 from flask_session import Session
+from flask_migrate import Migrate
 from datetime import datetime
 import re
 
 app = Flask(__name__)
 
 app.secret_key = 'your secret key'
-#engine = create_engine("mysql://myadmin:ol1PHP@20@localhost",echo=True)
+app.config['SQLALCHEMY_DATABASE_URI']='mysql://saleslab:ol2SYS*20@localhost/sales_lab'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'ol1PHP*20'
-app.config['MYSQL_DB'] = 'GOBT'
+# Initialise the database
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+# Import the models after db intialisation
+
+from models import Admin, Company, Customer, Employee, Sales, Location, Product
+
+# create tables automatically when running the app
+
+@app.before_request
+def create_tables():
+    db.create_all()
 
 
-mysql = MySQL(app)
 
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 date = datetime.date(datetime.now())
+
+def fetchone_as_dict(cursor):
+    row = cursor.fetchone()
+    if row is None:
+        return None
+    return dict(zip([column[0] for column in cursor.description], row))
 
 
 
@@ -44,12 +60,13 @@ def add_admin():
         confPassword = request.form.get("confPass")
     #-------------------------------------------------------------------------------
 
-        cur = mysql.connection.cursor() # connection variable
+        connection = db.engine.raw_connection()
+        cursor = connection.cursor() # connection variable
 
     #-------------------------------------------------------------------------------
         # This section checks if email already exits
         params = [username]
-        count = cur.execute("SELECT * from admins WHERE username=%s", params)
+        count = cursor.execute("SELECT * from admins WHERE username=%s", params)
         if count > 0:
             msg = "WARNING: This administrator already exist!"
             return render_template("register_admin_form.html",page = page, msg = msg)
@@ -58,12 +75,12 @@ def add_admin():
     #------------------------------------------------------------------------------
         msg = "Successful"
     # Inserts data in Customers table
-        cur.execute("INSERT INTO admins(firstname, lastname, gender, username, password)VALUES(%s, %s, %s, %s, %s)",
+        cursor.execute("INSERT INTO admins(firstname, lastname, gender, username, password)VALUES(%s, %s, %s, %s, %s)",
         (fname,lname,gender,username,password))
-        mysql.connection.commit()
+        db.session.commit()
     #-------------------------------------------------------------------------------
 
-        cur.close() #close connection
+        cursor.close() #close connection
     else:
         msg = "Please fill the form"
 
@@ -86,11 +103,12 @@ def login_Admin():
         username = request.form['username']
         password = request.form['password']
         # Check if account exists using MySQL
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        connection = db.engine.raw_connection()
+        cursor = connection.cursor()
         cursor.execute('SELECT * FROM admins WHERE username = %s AND password = %s', (username, password,))
         # Fetch one record and return result
         global account
-        account = cursor.fetchone()
+        account = fetchone_as_dict(cursor)
         # If account exists in accounts table in out database
         if account:
             sales_count = row_counter("sales")
@@ -165,7 +183,8 @@ def admin_List():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM admins")
     employees = cursor.fetchall()
     if employees:
@@ -205,12 +224,13 @@ def add_Emp():
         phone = request.form.get("phone")
     #-------------------------------------------------------------------------------
 
-        cur = mysql.connection.cursor() # connection variable
+        connection = db.engine.raw_connection()
+        cursor = connection.cursor() # connection variable # connection variable
 
     #-------------------------------------------------------------------------------
         # This section checks if email already exits
         params = [username]
-        count = cur.execute("SELECT * from employees WHERE username=%s", params)
+        count = cursor.execute("SELECT * from employees WHERE username=%s", params)
         if count > 0:
             msg = "WARNING: This employee already exist!"
             return render_template("register_employee_form.html",page = page, msg = msg,firstname=firstname)
@@ -218,13 +238,13 @@ def add_Emp():
             pass
     #------------------------------------------------------------------------------
         msg = "Employee Added Successfully"
-    # Inserts data in Customers table
-        cur.execute("INSERT INTO employees(firstname,lastname,dob,gender,username,password,role,doe,phone)VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+    # Inserts data in Employee table
+        cursor.execute("INSERT INTO employees(firstname,lastname,dob,gender,username,password,role,doe,phone)VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)",
         (fname,lname,dob,gender,username,password,role,doe,phone))
-        mysql.connection.commit()
+        db.session.commit()
     #-------------------------------------------------------------------------------
 
-        cur.close() #close connection
+        connection.close() #close connection
     else:
         msg = "Please fill the form"
 
@@ -243,7 +263,8 @@ def emp_List():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SET @n = 0")
     cursor.execute("""SELECT @n := @n+1 AS number,CONCAT(firstname," ",lastname)
     AS name,phone,gender,username,doe FROM employees WHERE status=%s""",[status])
@@ -266,7 +287,8 @@ def select_rem_main_emp():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM employees WHERE status =%s",[status])
     employees = cursor.fetchall()
     if employees:
@@ -287,9 +309,10 @@ def rem_employee():
     username = session.get('username')
 
     selected = request.form['selAnswer']
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("UPDATE employees SET status =%s WHERE id=%s",(status,selected))
-    mysql.connection.commit()
+    db.session.commit()
 
     msg = "Deleted Successfully!"
     status = "CURRENT"
@@ -314,7 +337,8 @@ def select_update_emp():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM employees WHERE status=%s",[status])
     employees = cursor.fetchall()
     if employees:
@@ -337,7 +361,8 @@ def update_employee_form():
 
 
     status = "CURRENT"
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM employees WHERE username=%s",[my_username])
     employees = cursor.fetchall()
     if employees:
@@ -347,7 +372,7 @@ def update_employee_form():
         return render_template("update_employee_form.html",page=page,msg = msg,
         firstname = firstname, employees=employees,user_id=user_id)
     else:
-        return "Can not fetch employee"
+        return "Unable to fetch employee"
 
 
 # PROCESS UPDATE EMPLOYEE
@@ -370,13 +395,15 @@ def update_employee():
     doe = request.form.get('doe')
     dob = request.form.get('dob')
     position = request.form.get('role')
+    
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     my_update = cursor.execute("""UPDATE employees SET firstname=%s,lastname=%s,
     phone=%s,gender=%s,doe=%s,dob=%s,role=%s WHERE id=%s """,
     (my_firstname,lastname,phone,gender,doe,dob,position,employee_id))
     if my_update:
-        mysql.connection.commit()
+        db.session.commit()
         return emp_List()
     else:
         return "Update Failed!"
@@ -401,11 +428,12 @@ def login_Sales():
         sales = "YES"
         status = "CURRENT"
         # Check if account exists using MySQL
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        connection = db.engine.raw_connection()
+        cursor = connection.cursor() # connection variable
         cursor.execute("""SELECT * FROM employees WHERE username = %s
-        AND password = %s AND sales_permit =%s AND status =%s """, (username,password,sales,status))
+        AND password = %s AND salespermit =%s AND status =%s """, (username,password,sales,status))
         # Fetch one record and return result
-        account = cursor.fetchone()
+        account = fetchone_as_dict(cursor)
         # If account exists in accounts table in out database
         if account:
             page = "Sales"
@@ -414,19 +442,20 @@ def login_Sales():
             session['username'] = account['username']
             session['firstname'] = account['firstname']
             session['id'] = account['id']
-            session['sales_permit'] = account['sales_permit']
+            session['salespermit'] = account['salespermit']
             firstname = session['firstname']
             id = session['id']
 
             username = session['username']
-            sales_permit = session['sales_permit']
+            sales_permit = session['salespermit']
             # Redirect to home page
 
 
             firstname = session.get('firstname')
             employee_id = session.get('id')
 
-            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            connection = db.engine.raw_connection()
+            cursor = connection.cursor() # connection variable
             cursor.execute("SET @n = 0")
             cursor.execute("""SELECT @n := @n+1 AS number, sales.id AS id, sales.sales_Date, sales.quantity,
             sales.remark, products.product_name, sales.unit_price AS Unit_Price, sales.unit_price*sales.quantity AS Amount,
@@ -442,7 +471,7 @@ def login_Sales():
                 return render_template("staff_signedIn.html",greeting=greeting,page = page, date = date, msg = msg, firstname = firstname)
             # Fetch one record and return result
 
-            return render_template("staff_signedIn.html", msg=msg,sales_permit=sales_permit, page = page, username = username, firstname = firstname)
+            return render_template("staff_signedIn.html", msg=msg,salespermit=salespermit, page = page, username = username, firstname = firstname)
 
         else:
             # Account doesnt exist or username/password incorrect
@@ -461,10 +490,11 @@ def salesperson_List():
 
     page = "Sales Persons"
     sales = "YES"
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SET @n = 0")
     cursor.execute("""SELECT @n := @n+1 AS number,CONCAT(firstname," ",lastname)AS
-    name, role,doe FROM employees WHERE sales_permit=%s""",[sales])
+    name, role,doe FROM employees WHERE salespermit=%s""",[sales])
     salespersons = cursor.fetchall()
     if salespersons:
         return render_template("list_salesperson.html",page = page, salespersons = salespersons, firstname=firstname)
@@ -484,7 +514,8 @@ def select_add_emp():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM employees WHERE status=%s",
     [status])
     employees = cursor.fetchall()
@@ -508,12 +539,13 @@ def add_sales_person():
 
     sales = "YES"
     selected = request.form['selAnswer']
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("UPDATE employees SET sales_permit=%s WHERE id=%s",(sales,selected))
-    mysql.connection.commit()
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
+    cursor.execute("UPDATE employees SET salespermit=%s WHERE id=%s",(sales,selected))
+    db.session.commit()
 
-    cursor.execute("SELECT * FROM employees WHERE sales_permit=%s AND id=%s",(sales,selected))
-    picks = cursor.fetchone()
+    cursor.execute("SELECT * FROM employees WHERE salespermit=%s AND id=%s",(sales,selected))
+    picks = fetchone_as_dict(cursor)
     if picks:
         msg = "You added"
         session['loggedin'] = True
@@ -538,8 +570,9 @@ def select_rem_emp():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM employees WHERE sales_permit=%s",[sales])
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
+    cursor.execute("SELECT * FROM employees WHERE salesPermit=%s",[sales])
     employees = cursor.fetchall()
     if employees:
         return render_template("remove_sales_person.html",page = page, employees=employees,msg=msg, firstname=firstname)
@@ -559,20 +592,21 @@ def rem_sales_person():
 
     sales = "NO"
     selected = request.form['selAnswer']
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("UPDATE employees SET sales_permit=%s WHERE id=%s",(sales,selected))
-    mysql.connection.commit()
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
+    cursor.execute("UPDATE employees SET salespermit=%s WHERE id=%s",(sales,selected))
+    db.session.commit()
 
     sales  = "YES"
-    cursor.execute("SELECT * FROM employees WHERE sales_permit=%s AND id=%s",(sales,selected))
-    picks = cursor.fetchone()
+    cursor.execute("SELECT * FROM employees WHERE salespermit=%s AND id=%s",(sales,selected))
+    picks = fetchone_as_dict(cursor)
     if picks:
         msg = "You removed"
         session['loggedin'] = True
         session['firstname'] = picks['firstname']
         firstname = session['firstname']
 
-        cursor.execute("SELECT * FROM employees WHERE sales_permit=%s",[sales])
+        cursor.execute("SELECT * FROM employees WHERE salespermit=%s",[sales])
         employees = cursor.fetchall()
         return render_template("remove_sales_person.html",page=page,msg = msg,firstname = firstname, employees=employees)
     else:
@@ -586,7 +620,8 @@ def select_cus():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM customers")
     customers = cursor.fetchall()
     if customers:
@@ -605,23 +640,27 @@ def add_location():
 
     if request.method == 'POST':
 
-        local = request.form.get("locality")
-        lotown = request.form.get("town")
+        country = request.form.get("country")
+        state = request.form.get("state")
+        city = request.form.get("city")
+        locality = request.form.get("locality")
+        
     #-------------------------------------------------------------------------------
 
-        cur = mysql.connection.cursor() # connection variable
+        connection = db.engine.raw_connection()
+        cursor = connection.cursor() # connection variable
 
     #-------------------------------------------------------------------------------
         # This section checks if email already exits
     #------------------------------------------------------------------------------
         msg = "Successful"
     # Inserts data in Customers table
-        cur.execute("INSERT INTO locations(locality, town)VALUES(%s, %s)",
-        (local,lotown))
-        mysql.connection.commit()
+        cursor.execute("INSERT INTO locations(country, state, city, locality)VALUES(%s,%s,%s, %s)",
+        (country,state,city,locality))
+        db.session.commit()
     #-------------------------------------------------------------------------------
 
-        cur.close() #close connection
+        cursor.close() #close connection
     else:
         msg = "Please fill the form"
 
@@ -636,7 +675,8 @@ def location_List():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SET @n = 0")
     cursor.execute("""SELECT @n := @n+1 AS number,locality,town FROM locations """)
     locations = cursor.fetchall()
@@ -658,7 +698,8 @@ def add_customer():
 
     page = "Add Customer"
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM locations")
     locations = cursor.fetchall()
     if locations:
@@ -673,7 +714,8 @@ def add_customer():
             location = request.form.get("location")
             doee = request.form.get("doe")
 
-            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            connection = db.engine.raw_connection()
+            cursor = connection.cursor() # connection variable
     #------------------------------------------------------------------------------
 
     #-------------------------------------------------------------------------------
@@ -693,11 +735,11 @@ def add_customer():
             # Inserts data in Customers table
             cursor.execute("INSERT INTO customers(firstname,lastname,phone,gender,location_id,doe)VALUES(%s,%s, %s, %s, %s, %s)",
             (fname,lname,phone,gender,location,doee))
-            mysql.connection.commit()
+            db.session.commit()
             return render_template("register_customer_form.html",page = page, msg = msg, firstname=firstname)
 
     #-------------------------------------------------------------------------------
-            cur.close() #close connection
+            cursor.close() #close connection
         else:
             msg = "Please fill the form"
 
@@ -713,7 +755,8 @@ def customer_List():
     username = session.get('username')
     status = "CURRENT"
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SET @n = 0")
     cursor.execute("""SELECT @n := @n+1 AS number,CONCAT(customers.firstname,
     " ",customers.lastname) AS name, customers.phone AS phone, customers.gender AS
@@ -737,7 +780,8 @@ def select_rem_main_cust():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM customers WHERE status =%s",[status])
     customers = cursor.fetchall()
     if customers:
@@ -760,9 +804,10 @@ def remove_customer():
     username = session.get('username')
 
     selected = request.form['selAnswer']
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("UPDATE customers SET status =%s WHERE id=%s",(status,selected))
-    mysql.connection.commit()
+    db.session.commit()
 
     msg = "Deleted Successfully!"
     status = "CURRENT"
@@ -788,7 +833,8 @@ def select_update_customer():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM customers WHERE status=%s",[status])
     customers = cursor.fetchall()
     if customers:
@@ -813,7 +859,8 @@ def update_customer_form():
     selected = request.form.get('customer_id')
 
     status = "CURRENT"
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM customers WHERE id=%s",[selected])
     customers = cursor.fetchall()
 
@@ -852,13 +899,14 @@ def update_customer():
     location_id = request.form.get('location')
 
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     my_update = cursor.execute("""UPDATE customers SET firstname=%s,
     lastname=%s,phone=%s,location_id=%s,gender=%s,address=%s,status=%s
     WHERE id=%s """,(cus_fname,cus_lname,phone,location_id,gender,address,
     status,my_primary))
     if my_update:
-        mysql.connection.commit()
+        db.session.commit()
 
         return customer_List()
 
@@ -890,7 +938,8 @@ def add_company():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM companies")
     companies = cursor.fetchall()
     if companies:
@@ -916,13 +965,13 @@ def add_company():
 
             msg = company +" added successful"
             # Inserts data in Customers table
-            cursor.execute("INSERT INTO companies(companyname,businesstype,contact_person,phone,email)VALUES(%s,%s,%s,%s,%s)",
+            cursor.execute("INSERT INTO companies(companyName,businessType,contactPerson,phone,email)VALUES(%s,%s,%s,%s,%s)",
             (company,businesstype,contact,phone,email))
-            mysql.connection.commit()
+            db.session.commit()
             return render_template("register_company_form.html",page = page, msg = msg,firstname=firstname)
 
         #-------------------------------------------------------------------------------
-            cur.close() #close connection
+            cursor.close() #close connection
         else:
             msg = "Please fill the form"
 
@@ -935,7 +984,8 @@ def company_list():
     firstname = session.get('firstname')
     username = session.get('username')
     page = "Partner Companies"
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM companies")
     companies = cursor.fetchall()
     if companies:
@@ -957,7 +1007,8 @@ def select_rem_main_comp():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM companies WHERE status =%s",[status])
     companies = cursor.fetchall()
     if companies:
@@ -978,9 +1029,10 @@ def remove_company():
     username = session.get('username')
 
     selected = request.form['selAnswer']
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("UPDATE companies SET status =%s WHERE id=%s",(status,selected))
-    mysql.connection.commit()
+    db.session.commit()
 
     msg = "Deleted Successfully!"
     status = "CURRENT"
@@ -1006,7 +1058,8 @@ def select_update_company():
     username = session.get('username')
 
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM companies WHERE status=%s",[status])
     companies = cursor.fetchall()
     if companies:
@@ -1029,7 +1082,8 @@ def update_company_form():
     selected = request.form['company_id']
 
     status = "CURRENT"
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM companies WHERE id=%s",[selected])
     companies = cursor.fetchall()
     if companies:
@@ -1062,12 +1116,13 @@ def update_company():
     contactp = request.form.get('contactperson')
     email = request.form.get('email')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    my_update = cursor.execute("""UPDATE companies SET phone=%s,companyname=%s,
-    businesstype=%s, contact_person=%s,email=%s WHERE id=%s """,
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
+    my_update = cursor.execute("""UPDATE companies SET phone=%s,companyName=%s,
+    businessType=%s, contactPerson=%s,email=%s WHERE id=%s """,
     (phone,company_name,producttype,contactp,email,my_primary))
     if my_update:
-        mysql.connection.commit()
+        db.session.commit()
 
         return company_list()
     else:
@@ -1089,7 +1144,8 @@ def add_product():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor) # connection variable
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable # connection variable
     cursor.execute("SELECT * FROM companies")
     companies = cursor.fetchall()
     if companies:
@@ -1106,7 +1162,8 @@ def add_product_pro():
     page = "Add Product"
     firstname = session.get('firstname')
     username = session.get('username')
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor) # connection variable
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable # connection variable
     cursor.execute("SELECT * FROM companies")
     companies = cursor.fetchall()
 
@@ -1120,9 +1177,9 @@ def add_product_pro():
 
         #------------------------------------------------------------------------------
         # Inserts data in Customers table
-        cursor.execute("INSERT INTO products(product_name,company_id,price)VALUES(%s,%s,%s)",
+        cursor.execute("INSERT INTO products(productName,company_id,unitPrice)VALUES(%s,%s,%s)",
         (product,company_id,unit_price))
-        mysql.connection.commit()
+        db.session.commit()
         msg = "Product Added!"
         return render_template("register_product_form.html",page = page, msg = msg,companies = companies,firstname=firstname)
         cursor.close() #close connection
@@ -1142,10 +1199,11 @@ def list_product():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SET @n = 0")
     cursor.execute("""SELECT @n := @n+1 AS number,products.product_name AS name,
-    products.status AS status,companies.companyname AS company,products.price AS price FROM products,
+    products.status AS status,companies.companyName AS company,products.price AS price FROM products,
     companies WHERE products.company_id = companies.id AND products.status=%s """,[status])
     products = cursor.fetchall()
     if products:
@@ -1168,7 +1226,8 @@ def select_rem_main_prod():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM products WHERE status =%s",[status])
     products = cursor.fetchall()
     if products:
@@ -1189,9 +1248,10 @@ def remove_product():
     username = session.get('username')
 
     selected = request.form['selAnswer']
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("UPDATE products SET status =%s WHERE id=%s",(status,selected))
-    mysql.connection.commit()
+    db.session.commit()
 
     msg = "Deleted Successfully!"
     status = "CURRENT"
@@ -1216,7 +1276,8 @@ def select_update_product():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM products WHERE status=%s",[status])
     products = cursor.fetchall()
     if products:
@@ -1239,7 +1300,8 @@ def update_product_form():
     selected = request.form['product_id']
 
     status = "CURRENT"
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM products WHERE id=%s",[selected])
     products = cursor.fetchall()
 
@@ -1273,12 +1335,13 @@ def update_product():
     company_id = request.form.get('company')
 
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    my_update = cursor.execute("""UPDATE products SET product_name=%s,
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
+    my_update = cursor.execute("""UPDATE products SET productName=%s,
     price=%s,company_id=%s,status=%s WHERE id=%s """,(product_name,unit_price,
     company_id,status,my_primary))
     if my_update:
-        mysql.connection.commit()
+        db.session.commit()
 
         return list_product()
 
@@ -1298,12 +1361,13 @@ def add_sales():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor) # connection variable
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable # connection variable
     cursor.execute("SELECT * FROM products")
     products = cursor.fetchall()
     firstname = session.get('firstname')
     employee_id = session.get('id')
-    cursor.execute("SELECT * FROM products ORDER BY product_name ASC")
+    cursor.execute("SELECT * FROM products ORDER BY productName ASC")
     products = cursor.fetchall()
 
     cursor.execute("SELECT * FROM customers ORDER BY firstname ASC")
@@ -1332,9 +1396,9 @@ def add_sales():
         #------------------------------------------------------------------------------
             msg = "Successful"
         # Inserts data in Customers table
-            cursor.execute("INSERT INTO sales(product_id,customer_id,salesPerson_id,sales_Date,unit_price,quantity,remark)VALUES(%s,%s,%s,%s,%s,%s,%s)",
+            cursor.execute("INSERT INTO sales(product_id,customer_id,salesPerson_id,salesDate,unitPrice,quantity,remarks)VALUES(%s,%s,%s,%s,%s,%s,%s)",
             (product_s,my_customer,employee_id,date,unit_price,sales_quant,remark_s))
-            mysql.connection.commit()
+            db.session.commit()
         #-------------------------------------------------------------------------------
         else:
             msg = "Please fill the form"
@@ -1355,7 +1419,8 @@ def admin_add_sales():
     firstname = session.get('firstname')
     username = session.get('username')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor) # connection variable
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable # connection variable
     cursor.execute("SELECT * FROM products")
     products = cursor.fetchall()
     firstname = session.get('firstname')
@@ -1366,7 +1431,7 @@ def admin_add_sales():
     cursor.execute("SELECT * FROM customers ORDER BY firstname ASC")
     customers = cursor.fetchall()
 
-    cursor.execute("SELECT * FROM employees WHERE sales_permit=%s",[sales])
+    cursor.execute("SELECT * FROM employees WHERE salesPermit=%s",[sales])
     salespersons = cursor.fetchall()
 
     cursor.execute("SELECT * FROM employees")
@@ -1392,9 +1457,9 @@ def admin_add_sales():
         #------------------------------------------------------------------------------
             msg = "Successful"
         # Inserts data in Customers table
-            cursor.execute("INSERT INTO sales(product_id,customer_id,salesPerson_id,sales_Date,unit_price,quantity,remark)VALUES(%s,%s,%s,%s,%s,%s,%s)",
+            cursor.execute("INSERT INTO sales(product_id,customer_id,salesPerson_id,salesDate,unitPrice,quantity,remarks)VALUES(%s,%s,%s,%s,%s,%s,%s)",
             (product_s,my_customer,sales_p,date,unit_price,sales_quant,remark_s))
-            mysql.connection.commit()
+            db.session.commit()
         #-------------------------------------------------------------------------------
         else:
             msg = "Please fill the form"
@@ -1423,13 +1488,14 @@ def mysales_List():
     firstname = session.get('firstname')
     employee_id = session.get('id')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SET @n = 0")
     cursor.execute("""SELECT @n := @n+1 AS number, sales.id AS id, sales.sales_Date, sales.quantity,
-    sales.remark, products.product_name, sales.unit_price AS Unit_Price, sales.unit_price*sales.quantity AS Amount,
+    sales.remarks, products.productName, sales.unitPrice AS Unit_Price, sales.unitPrice*sales.quantity AS Amount,
      CONCAT(customers.firstname," ",customers.lastname) AS Customer FROM sales,products,customers
      WHERE sales.product_id = products.id AND sales.customer_id = customers.id
-     AND salesPerson_id=%s AND sales_Date=%s""",(employee_id,date))
+     AND salesPerson_id=%s AND salesDate=%s""",(employee_id,date))
     mysales = cursor.fetchall()
     if mysales:
         msg = firstname +"'s Sales "
@@ -1448,18 +1514,19 @@ def mysales_bydate_List():
     employee_id = session.get('id')
     this_day = request.form.get('this_day')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("SELECT * FROM employees")
     employees = cursor.fetchall()
 
     if request.method == 'POST':
 
         cursor.execute("SET @n = 0")
-        cursor.execute("""SELECT @n := @n+1 AS number, sales.id AS id, sales.sales_Date, sales.quantity,
-        sales.remark, products.product_name, sales.unit_price AS Unit_Price, sales.unit_price*sales.quantity AS Amount,
+        cursor.execute("""SELECT @n := @n+1 AS number, sales.id AS id, sales.salesDate, sales.quantity,
+        sales.remarks, products.productName, sales.unitPrice AS Unit_Price, sales.unitPrice*sales.quantity AS Amount,
          CONCAT(customers.firstname," ",customers.lastname) AS Customer FROM sales,products,customers
          WHERE sales.product_id = products.id AND sales.customer_id = customers.id
-         AND salesPerson_id=%s AND sales_Date=%s""",(employee_id,this_day))
+         AND salesPerson_id=%s AND salesDate=%s""",(employee_id,this_day))
         mysales = cursor.fetchall()
         if mysales:
             msg = firstname +"'s Sales "
@@ -1482,8 +1549,9 @@ def admin_sales_bydate_List():
 
     this_day = request.form.get('this_day')
     sales = "YES"
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM employees WHERE sales_permit=%s",[sales])
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
+    cursor.execute("SELECT * FROM employees WHERE salesPermit=%s",[sales])
     salespersons = cursor.fetchall()
     salesperson_id = request.form.get('salesperson')
 
@@ -1492,17 +1560,17 @@ def admin_sales_bydate_List():
         cursor.execute("SELECT firstname FROM employees WHERE id=%s",[salesperson_id])
         firstname = cursor.fetchall()
         cursor.execute("SET @n = 0")
-        cursor.execute("""SELECT @n := @n+1 AS number,sales.sales_Date,sales.quantity,sales.remark,products.product_name,
-        sales.unit_price AS Unit_Price, sales.unit_price*sales.quantity AS Amount,
+        cursor.execute("""SELECT @n := @n+1 AS number,sales.salesDate,sales.quantity,sales.remarks,products.productName,
+        sales.unitPrice AS Unit_Price, sales.unitPrice*sales.quantity AS Amount,
         CONCAT(customers.firstname," ",customers.lastname) AS Customer FROM sales,products,customers
         WHERE sales.product_id = products.id AND sales.customer_id = customers.id
-        AND salesPerson_id=%s AND sales_Date=%s""",(salesperson_id,this_day))
+        AND salesPerson_id=%s AND salesDate=%s""",(salesperson_id,this_day))
         mysales = cursor.fetchall()
 
         if mysales:
             cursor.execute("""SELECT  SUM(sales.unit_price*sales.quantity) AS total
             FROM sales,products WHERE sales.product_id = products.id
-            AND salesPerson_id=%s AND sales_Date=%s""",(salesperson_id,this_day))
+            AND salesPerson_id=%s AND salesDate=%s""",(salesperson_id,this_day))
             mysum = cursor.fetchall()
             msg =  "'s sales for "+ this_day
             return render_template("list_admin_sales_bydate.html",mysum=mysum,firstname=firstname,salesperson_id=salesperson_id,salespersons= salespersons, page = page,date = date, msg = msg, mysales = mysales,this_day = this_day)
@@ -1524,22 +1592,23 @@ def admin_allsales_List():
     firstname = session.get('firstname')
     this_day = request.form.get('this_day')
     sales = "YES"
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
 
 
     if request.method == 'POST':
         cursor.execute("SET @n = 0")
-        cursor.execute("""SELECT @n := @n+1 AS number,sales.sales_Date,sales.quantity,sales.remark,products.product_name,
-        sales.unit_price AS Unit_Price, sales.unit_price*sales.quantity AS Amount,
+        cursor.execute("""SELECT @n := @n+1 AS number,sales.salesDate,sales.quantity,sales.remarks,products.productName,
+        sales.unitPrice AS Unit_Price, sales.unitPrice*sales.quantity AS Amount,
         CONCAT(employees.firstname," ",employees.lastname)
         AS Salesperson,CONCAT(customers.firstname," ",customers.lastname)
         AS Customer FROM sales,products,customers,employees WHERE sales.salesPerson_id = employees.id AND
         sales.product_id = products.id AND sales.customer_id = customers.id
-        AND employees.sales_permit=%s AND sales_Date=%s""",(sales,this_day))
+        AND employees.salesPermit=%s AND salesDate=%s""",(sales,this_day))
         mysales = cursor.fetchall()
         if mysales:
-            cursor.execute("""SELECT  SUM(sales.unit_price*sales.quantity) AS total FROM sales,products WHERE sales.product_id = products.id
-            AND sales_Date=%s""",[this_day])
+            cursor.execute("""SELECT  SUM(sales.unitPrice*sales.quantity) AS total FROM sales,products WHERE sales.product_id = products.id
+            AND salesDate=%s""",[this_day])
             mysum = cursor.fetchall()
             msg =  "Showing All Sales for "+ this_day
             return render_template("list_admin_all_sales_bydate.html", page = page,date = date, msg = msg,firstname=firstname, mysales = mysales,this_day = this_day, mysum=mysum)
@@ -1560,11 +1629,12 @@ def admin_allsales_List2():
     page = "Sales"
     firstname = session.get('firstname')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
 
     cursor.execute("SET @n = 0")
-    cursor.execute("""SELECT @n := @n+1 AS number,sales.sales_Date,sales.quantity,sales.remark,products.product_name,
-    sales.unit_price AS Unit_Price, sales.unit_price*sales.quantity AS Amount, CONCAT(employees.firstname," ",employees.lastname)
+    cursor.execute("""SELECT @n := @n+1 AS number,sales.salesDate,sales.quantity,sales.remarks,products.productName,
+    sales.unitPrice AS Unit_Price, sales.unitPrice*sales.quantity AS Amount, CONCAT(employees.firstname," ",employees.lastname)
     AS Salesperson, CONCAT(customers.firstname," ",customers.lastname) AS Customer
     FROM sales,products,customers,employees WHERE sales.salesPerson_id = employees.id
     AND sales.product_id = products.id AND sales.customer_id = customers.id""")
@@ -1572,7 +1642,7 @@ def admin_allsales_List2():
     if mysales:
         msg =  "Showing All Sales"
         this_day = "ALL"
-        cursor.execute("SELECT  SUM(sales.unit_price*sales.quantity) AS total FROM sales,products WHERE sales.product_id = products.id")
+        cursor.execute("SELECT  SUM(sales.unitPrice*sales.quantity) AS total FROM sales,products WHERE sales.product_id = products.id")
         mysum = cursor.fetchall()
         if mysum:
             return render_template("list_admin_all_sales_bydate.html", firstname=firstname,page = page, msg = msg, mysales = mysales, this_day = this_day,mysum = mysum)
@@ -1584,7 +1654,8 @@ def admin_allsales_List2():
 
 
 def row_counter(table):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     if table == "sales":
         cursor.execute("SELECT COUNT(*) AS mycount FROM sales")
         counter = cursor.fetchall()
@@ -1607,20 +1678,22 @@ def row_counter(table):
 
 def performance(): # show weekly sales performance
     sales = "YES"
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("""select count(*) as count, (100 - count(*)) AS bal,
     SUM(sales.quantity) AS netsales,CONCAT(employees.firstname," ",
     employees.lastname) AS fullname FROM sales,employees
-    WHERE YEARWEEK(sales.sales_Date) = YEARWEEK(NOW()) AND
+    WHERE YEARWEEK(sales.salesDate) = YEARWEEK(NOW()) AND
     sales.salesPerson_id = employees.id GROUP BY fullname""")
     salespersons = cursor.fetchall()
 
     return (salespersons)
 
 def delete(myclass,entity):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor() # connection variable
     cursor.execute("""DELETE FROM %s WHERE id =%s""",(myclass,entity))
-    mysql.connection.commit()
+    db.session.commit()
 
 
 
