@@ -13,7 +13,7 @@ import re
 app = Flask(__name__)
 
 app.secret_key = 'your secret key'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'mysql://saleslab:ol2SYS*20@localhost/sales_lab')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL') #mysql://saleslab:ol2SYS*20@localhost/sales_lab
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialise the database
