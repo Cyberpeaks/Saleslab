@@ -14,7 +14,7 @@ import logging
 app = Flask(__name__)
 
 app.secret_key = 'your secret key'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL','mysql://saleslab:ol2SYS*20@localhost/sales_lab')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL','postgresql://saleslab:ol2SYS*20@localhost/sales_lab')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Fix the "postgres://" URL issue for SQLAlchemy
@@ -1724,8 +1724,8 @@ def performance(): # Gets weekly sales employee performance
         FROM 
             sales, employees
         WHERE 
-            YEARWEEK(sales.salesDate) = YEARWEEK(NOW()) 
-            AND sales.salesPerson_id = employees.id 
+            date_trunc('week', TO_DATE(sales."salesDate", 'YYYY-MM-DD')) = date_trunc('week', NOW()) 
+            AND sales."salesPerson_id" = employees.id 
         GROUP BY 
             fullname
     """)
