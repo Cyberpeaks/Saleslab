@@ -1712,18 +1712,27 @@ def row_counter(table):
         pass
     #,customers_count,locations_count
 
-def performance(): # show weekly sales performance
-    sales = "YES"
+def performance(): # Gets weekly sales employee performance 
     connection = db.engine.raw_connection()
-    cursor = connection.cursor() # connection variable
-    cursor.execute("""select count(*) as count, (100 - count(*)) AS bal,
-    SUM(sales.quantity) AS netsales,CONCAT(employees.firstname," ",
-    employees.lastname) AS fullname FROM sales,employees
-    WHERE YEARWEEK(sales.salesDate) = YEARWEEK(NOW()) AND
-    sales.salesPerson_id = employees.id GROUP BY fullname""")
-    salespersons = cursor.fetchall()
-
-    return (salespersons)
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT 
+            COUNT(*) AS count, 
+            (100 - COUNT(*)) AS bal,
+            SUM(sales.quantity) AS netsales,
+            employees.firstname || ' ' || employees.lastname AS fullname 
+        FROM 
+            sales, employees
+        WHERE 
+            YEARWEEK(sales.salesDate) = YEARWEEK(NOW()) 
+            AND sales.salesPerson_id = employees.id 
+        GROUP BY 
+            fullname
+    """)
+    results = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return results
 
 def delete(myclass,entity):
     connection = db.engine.raw_connection()
