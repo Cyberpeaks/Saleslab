@@ -9,6 +9,7 @@ from flask_session import Session
 from flask_migrate import Migrate
 from datetime import datetime
 import re
+import logging
 
 app = Flask(__name__)
 
@@ -51,9 +52,39 @@ def fetchone_as_dict(cursor):
 
 
 # ADD ADMINISTRATOR TO DATABASE
-@app.route("/adregad", methods = ['POST','GET'])
+
+@app.route("/adregad", methods=['POST', 'GET'])
 def add_admin():
     page = "Add Administrator"
+    msg = ""
+
+    if request.method == 'POST':
+        fname = request.form.get("firstname")
+        lname = request.form.get("lastname")
+        gender = request.form.get("gender")
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        # Create a new Admin object
+        new_admin = Admin(firstname=fname, lastname=lname, gender=gender, username=username, password=password)
+
+        # Add the new admin to the database
+        try:
+            db.session.add(new_admin)
+            db.session.commit()
+            msg = "Administrator added successfully!"
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Error adding admin: {str(e)}")
+            msg = "An error occurred while adding the administrator!"
+
+    return render_template("register_admin_form.html", msg=msg, page=page)
+
+# Your other routes and code here
+"""@app.route("/adregad", methods = ['POST','GET'])
+def add_admin():
+    page = "Add Administrator"
+    msg = ""
 
     if request.method == 'POST':
 
@@ -90,7 +121,7 @@ def add_admin():
         msg = "Please fill the form"
 
     return render_template("register_admin_form.html",page = page, msg = msg)
-
+"""
 
 # LOGIN AS ADMINISTRATOR
 @app.route("/signIn", methods = ['GET','POST'])
